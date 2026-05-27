@@ -1,0 +1,19 @@
+{
+  "baselines": [
+    {
+      "id": "bill-prod-core",
+      "name": "Prod Core Billing Account",
+      "scope": "BILLING_ACCOUNT",
+      "scopePath": "billingAccounts/01AA12-BB34CC-556677",
+      "billingAccountId": "01AA12-BB34CC-556677",
+      "baselineStatus": "CURRENT",
+      "owner": "Cloud FinOps",
+      "currentMonthSpendUsd": 152200,
+      "budgetUsd": 165000,
+      "monthOverMonthChangePct": 5.2,
+      "unlabeledSpendPct": 1.7,
+      "collectedAt": "2026-05-30T09:00:00Z"
+    }
+  ],
+  "anomalies": []
+}
