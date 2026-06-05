@@ -109,5 +109,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSL --retry 5 --retry-delay 3 "${LIVE_URL}" \
-            | grep -q 'GCP billing anomalies'
+          curl -fsSL --retry 5 --retry-delay 3 "${LIVE_URL}" -o /tmp/gcp-live.html
+          grep -q 'GCP billing anomalies' /tmp/gcp-live.html
