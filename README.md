@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mizcausevic-dev/gcp-billing-anomaly-router/actions/workflows/ci.yml/badge.svg)](https://github.com/mizcausevic-dev/gcp-billing-anomaly-router/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
-[![Deploy](https://github.com/mizcausevic-dev/gcp-billing-anomaly-router/actions/workflows/pages.yml/badge.svg)](https://github.com/mizcausevic-dev/gcp-billing-anomaly-router/actions/workflows/pages.yml)
+[![Deploy](https://github.com/mizcausevic-dev/gcp-billing-anomaly-router/actions/workflows/deploy.yml/badge.svg)](https://github.com/mizcausevic-dev/gcp-billing-anomaly-router/actions/workflows/deploy.yml)
 
 Operator control plane for GCP billing anomalies, FinOps routing posture, budget breaches, unlabeled spend drift, billing export gaps, and remediation sequencing.
 
