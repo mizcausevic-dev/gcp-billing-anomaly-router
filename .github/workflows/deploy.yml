@@ -1,8 +1,6 @@
 name: Deploy to gcp.kineticgain.com
 
-# Node/Vite/React -> Hostinger FTP at /gcp/
-# workflow_dispatch-only: manual trigger while the subdomain/DNS rail is being verified
-# once Miz provisions via hPanel.
+# Node/Vite/React -> Hostinger SSH deploy at /gcp/
 
 on:
   workflow_dispatch:
@@ -16,9 +14,15 @@ concurrency:
 
 jobs:
   build-deploy:
-    name: Build + FTP-sync to gcp.kineticgain.com
+    name: Build + SSH deploy to gcp.kineticgain.com
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      TARGET_NAME: gcp
+      LIVE_URL: https://gcp.kineticgain.com/
 
     steps:
       - uses: actions/checkout@v4
@@ -50,16 +54,60 @@ jobs:
           echo "DEPLOY_DIR=$DEPLOY_DIR" >> $GITHUB_ENV
           test -f "$DEPLOY_DIR/index.html" || (echo "FAIL: $DEPLOY_DIR/index.html missing" && exit 1)
 
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./${{ env.DEPLOY_DIR }}/
-          server-dir: /gcp/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
+      - name: Configure SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SSH_HOST}"
+          test -n "${SSH_PORT}"
+          test -n "${SSH_USER}"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/hostinger_deploy_key
+          chmod 600 ~/.ssh/hostinger_deploy_key
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          test -s ~/.ssh/known_hosts
+
+      - name: Upload build to staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_parent="/home/${SSH_USER}/domains/kineticgain.com/public_html"
+          release_dir="${target_parent}/.${TARGET_NAME}-release-${GITHUB_SHA}"
+          ssh -i ~/.ssh/hostinger_deploy_key -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "mkdir -p '${release_dir}'"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/hostinger_deploy_key -p ${SSH_PORT}" \
+            "${DEPLOY_DIR}/" "${SSH_USER}@${SSH_HOST}:${release_dir}/"
+
+      - name: Validate staging and swap live folder
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_parent="/home/${SSH_USER}/domains/kineticgain.com/public_html"
+          release_dir="${target_parent}/.${TARGET_NAME}-release-${GITHUB_SHA}"
+          target_dir="${target_parent}/${TARGET_NAME}"
+          backup_dir="${target_parent}/.${TARGET_NAME}-backup-${GITHUB_SHA}"
+          ssh -i ~/.ssh/hostinger_deploy_key -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" "
+            set -e
+            test -f '${release_dir}/index.html'
+            grep -q 'GCP billing anomalies' '${release_dir}/index.html'
+            if [ -d '${target_dir}' ]; then
+              mv '${target_dir}' '${backup_dir}'
+            fi
+            if mv '${release_dir}' '${target_dir}'; then
+              echo 'GCP deploy swap complete.'
+            else
+              if [ -d '${backup_dir}' ]; then
+                mv '${backup_dir}' '${target_dir}'
+              fi
+              exit 1
+            fi
+          "
+
+      - name: Verify live GCP surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 5 --retry-delay 3 "${LIVE_URL}" \
+            | grep -q 'GCP billing anomalies'
