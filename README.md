@@ -102,7 +102,7 @@ Open:
 |--------|--------|
 | CI | Node 20 + 22 matrix — lint · typecheck · coverage · build · demo · smoke · prerender · `npm audit` |
 | License | [AGPL-3.0-or-later](./LICENSE) |
-| Deploy | Static prerender -> **https://billing.kineticgain.com/** |
+| Deploy | Static prerender -> **https://gcp.kineticgain.com/** |
 | Data posture | Synthetic sample data only; no live GCP credentials, project tokens, billing exports, or production finance dashboards |
 
 ## Docs
