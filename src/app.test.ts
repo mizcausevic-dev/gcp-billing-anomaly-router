@@ -23,4 +23,18 @@ describe("app", () => {
     expect(sample.status).toBe(200);
     expect(sample.body.sample.baselines).toHaveLength(2);
   });
+
+  test("serves every dashboard route and api route", async () => {
+    for (const route of ["/billing-lane", "/anomaly-risks", "/routing-posture", "/verification"]) {
+      const response = await request(app).get(route);
+      expect(response.status).toBe(200);
+      expect(response.type).toMatch(/html/);
+    }
+
+    for (const route of ["/api/billing-lane", "/api/anomaly-risks", "/api/routing-posture", "/api/verification"]) {
+      const response = await request(app).get(route);
+      expect(response.status).toBe(200);
+      expect(response.body).toBeTruthy();
+    }
+  });
 });
